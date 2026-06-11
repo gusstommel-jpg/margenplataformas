@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMG · Comportamiento por Plataforma · Ene–May 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Raleway:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#26283F; --red:#EB4751; --orange:#F98C53;
+    --uber:#111827; --rappi:#FF4D2E; --didi:#F4A300;
+    --bg:#F4F5F8; --card:#FFFFFF; --line:#E6E8EF; --muted:#7A7E92;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Raleway',sans-serif;background:var(--bg);color:var(--navy);padding:28px 22px 60px}
+  .wrap{max-width:1280px;margin:0 auto}
+  header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:6px}
+  h1{font-family:'Poppins',sans-serif;font-weight:700;font-size:25px;letter-spacing:-.4px}
+  h1 .dot{color:var(--red)}
+  .sub{color:var(--muted);font-size:13px;margin-top:3px;font-weight:500}
+  .toggle{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:11px;padding:4px;gap:3px}
+  .toggle button{font-family:'Poppins',sans-serif;font-weight:600;font-size:13px;border:0;background:transparent;color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;transition:.15s}
+  .toggle button.on{background:var(--navy);color:#fff}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:18px 0 22px;align-items:center}
+  .legend span{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:#454860}
+  .legend i{width:22px;height:3px;border-radius:2px;display:inline-block}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 18px 12px;box-shadow:0 1px 3px rgba(38,40,63,.04)}
+  .card.hero{grid-column:1/-1}
+  .ctop{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+  .bname{font-family:'Poppins',sans-serif;font-weight:600;font-size:16px}
+  .mom{font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px}
+  .up{color:#0a7d4b;background:#e7f6ee}.down{color:#c0392b;background:#fbeaea}
+  .chartbox{position:relative;height:200px}
+  .card.hero .chartbox{height:300px}
+  footer{margin-top:34px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>AMG · Comportamiento por Plataforma <span class="dot">·</span></h1>
+      <div class="sub">Enero – Mayo 2026 · Una gráfica por marca · 3 líneas (Uber / Rappi / Didi)</div>
+    </div>
+    <div class="toggle">
+      <button id="bVentas" class="on" onclick="setMode('ventas')">Ventas</button>
+      <button id="bMargen" onclick="setMode('margen')">Margen %</button>
+    </div>
+  </header>
+  <div class="legend">
+    <span><i style="background:var(--uber)"></i>Uber Eats</span>
+    <span><i style="background:var(--rappi)"></i>Rappi <small style="color:var(--muted);font-weight:500">(incl. Turbo)</small></span>
+    <span><i style="background:var(--didi)"></i>Didi Food</span>
+  </div>
+  <div class="grid" id="grid"></div>
+  <footer>
+    Fuente: RESUMEN_POR_PLATAFORMAS_2026.xlsx · Rappi consolida canal Turbo. Chubbies DK (dark kitchen) y RF (restaurante físico) se muestran por separado.
+    En modo <b>Margen %</b> las líneas muestran la rentabilidad reportada por plataforma; el badge MoM corresponde a ventas totales de la marca (Mayo vs Abril).
+  </footer>
+</div>
+<script>
+const DATA = {"CHUBBIES DK": {"uber": [4344092.16, 4576324.05, 5620172.33, 4354169.88, 4781213.0600000005], "rappi": [1508408.5899999996, 1288010.2200000002, 950628.41, 1204865.47, 1371678.4400000002], "didi": [1316685.5299999998, 1160174.12, 1630012.33, 1476495.6999999997, 1396145.2999999998], "m": {"uber": [0.5899954515765442, 0.5893157190237773, 0.587854921745165, 0.5677739317252797, 0.5331608719706495], "rappi": [0.6539577737829525, 0.44709488846197454, 0.5073491891565671, 0.5836898384932035, 0.5540740411605484], "didi": [0.7467364445769318, 0.523831766117923, 0.46329958593722786, 0.49177173234626176, 0.5576529917635515]}}, "CHUBBIES RF": {"uber": [469480.51, 464039.54999999993, 616994.01, 452981.69999999995, 490035.4], "rappi": [189081.72999999998, 211957.63999999996, 192582.99999999997, 183350.74, 200364.15000000002], "didi": [52331.22, 40651.15, 73730.07, 83425.1, 72894.72], "m": {"uber": [0.5937132201837995, 0.5942710874618206, 0.5936434828964456, 0.5711893323245696, 0.5369055704136177], "rappi": [0.6862744905888557, 0.5952560240223695, 0.649534113753716, 0.6315926501169276, 0.6037445003543718], "didi": [0.755621327748633, 0.570753054004067, 0.4995228352111436, 0.5292329066064428, 0.5669652329470327]}}, "MUY GALLITO": {"uber": [249298.54, 245459.41, 279472.55, 234884.25, 257683.36], "rappi": [171011.41, 80840.99, 100030.51, 130848.63, 223829.59], "didi": [191556.78999999998, 272939.76, 271927.38000000006, 298871.83999999997, 228838.09], "m": {"uber": [0.4925999611806036, 0.5046054558041773, 0.495592877650359, 0.4930555118234201, 0.44845685810954683], "rappi": [0.47732662783478214, 0.40278085785990764, 0.41093598481479526, 0.4383111835641333, 0.45996031260425696], "didi": [0.6486530809336615, 0.5269388098670894, 0.4257359076463725, 0.47655179341630055, 0.4867531794496385]}}, "TIIN THAII": {"uber": [183529.85, 168172.55, 199534.72, 165639.65, 151928.88], "rappi": [21891.12, 19211.940000000002, 15885.970000000001, 12421.14, 19361.3], "didi": [3291.48, 5344.16, 5466.15, 2540.76, 4875.74], "m": {"uber": [0.5651628389655661, 0.5799953441051198, 0.5754486694798279, 0.5746348681015223, 0.527971689694228], "rappi": [0.6370356919617134, 0.6495567501775029, 0.643025992288207, 0.39935504613702855, 0.4462671430217817], "didi": [0.7640389972144846, 0.6656071739942707, 0.7122947615324472, 0.7122960470984021, 0.6607589104214663]}}, "FAT BASTARD": {"uber": [130300.89, 190214.19, 231297.05, 172115.78999999998, 173857.88], "rappi": [54676.93000000001, 80443.52, 119255.69, 131938.16, 162761.71999999997], "didi": [6918.83, 14472.579999999998, 3741.52, 0, 0], "m": {"uber": [0.5527923245967571, 0.5730247139593891, 0.5662080706315511, 0.5835086297789244, 0.5734515037370785], "rappi": [0.4628765947837869, 0.40848313350660964, 0.5886792161930003, 0.5577640956956109, 0.4742504061411014], "didi": [0.5073943971839249, 0.5532606742689812, 0.5969240587109126, 0, 0]}}, "BRASS MONKEY": {"uber": [43596.86, 57940.95, 46762.07, 37808.72, 38234.48], "rappi": [9078.03, 4929.78, 6144.799999999999, 7301.71, 5292.24], "didi": [2845.84, 1220.0, 870.0, 2458.67, 190.96], "m": {"uber": [0.4981815065362465, 0.5288223536498549, 0.4978197397442069, 0.4838029917209433, 0.4463464120194721], "rappi": [0.5592841629745461, 0.5640240720538721, 0.5489202674383794, 0.4215832079661867, 0.20597983886661736], "didi": [0.41279953582825646, 0.07721225776236346, 0.29322548028311424, 0.3690588411888322, 0.040509121764955455]}}, "PALERMO": {"uber": [14584.65, 16705.15, 28138.99, 27511.15, 31258.67], "rappi": [3992.5599999999995, 4041.0, 6552.23, 4048.15, 9539.98], "didi": [1390.48, 566.3, 406.03, 256.45, 1294.98], "m": {"uber": [0.6274317057431705, 0.6310497884557269, 0.6256863006692905, 0.618798218583414, 0.5794974138410485], "rappi": [0.47964440172993744, 0.6042165071770335, 0.6424384743602314, 0.5869435986660867, 0.6117332478358448], "didi": [0.1670446900528592, 0.7123270440251572, 0.7123333333333333, 0.7123611111111111, 0.7123102310231023]}}};
+const MONTHS=['Ene','Feb','Mar','Abr','May'];
+const COL={uber:'#111827',rappi:'#FF4D2E',didi:'#F4A300'};
+const LBL={uber:'Uber',rappi:'Rappi',didi:'Didi'};
+let mode='ventas'; const charts={};
+const fmtMoney=v=>'$'+Math.round(v).toLocaleString('es-MX');
+const fmtK=v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+Math.round(v);
+
+function momBadge(b){
+  const sum=(arr)=>arr.reduce((a,x)=>a+x,0);
+  const apr=DATA[b].uber[3]+DATA[b].rappi[3]+DATA[b].didi[3];
+  const may=DATA[b].uber[4]+DATA[b].rappi[4]+DATA[b].didi[4];
+  const ch=apr?((may/apr-1)*100):0;
+  return {ch, cls: ch>=0?'up':'down', txt:(ch>=0?'▲ ':'▼ ')+Math.abs(ch).toFixed(1)+'% MoM'};
+}
+function datasets(b){
+  return ['uber','rappi','didi'].map(p=>{
+    const vals = mode==='ventas'? DATA[b][p] : DATA[b].m[p].map(x=>x*100);
+    return {label:LBL[p],data:vals,borderColor:COL[p],backgroundColor:COL[p],
+      borderWidth:2.4,tension:.32,pointRadius:3,pointHoverRadius:5,pointBackgroundColor:COL[p],spanGaps:true};
+  });
+}
+function opts(){
+  return {responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{
+      const v=c.raw; return ' '+c.dataset.label+': '+(mode==='ventas'?fmtMoney(v):v.toFixed(1)+'%');}}}},
+    scales:{y:{beginAtZero:true,grid:{color:'#EEF0F5'},ticks:{font:{family:'Raleway',size:11},color:'#9aa',
+      callback:v=>mode==='ventas'?fmtK(v):v+'%'}},
+      x:{grid:{display:false},ticks:{font:{family:'Raleway',size:11},color:'#9aa'}}}};
+}
+function build(){
+  const grid=document.getElementById('grid'); grid.innerHTML='';
+  Object.keys(DATA).forEach((b,i)=>{
+    const mb=momBadge(b);
+    const card=document.createElement('div');
+    card.className='card'+(b==='CHUBBIES DK'?' hero':'');
+    card.innerHTML=`<div class="ctop"><div class="bname">${b}</div>
+      <div class="mom ${mb.cls}">${mb.txt}</div></div>
+      <div class="chartbox"><canvas id="c${i}"></canvas></div>`;
+    grid.appendChild(card);
+    charts[b]=new Chart(document.getElementById('c'+i),{type:'line',data:{labels:MONTHS,datasets:datasets(b)},options:opts()});
+  });
+}
+function setMode(m){
+  mode=m;
+  document.getElementById('bVentas').classList.toggle('on',m==='ventas');
+  document.getElementById('bMargen').classList.toggle('on',m==='margen');
+  Object.keys(DATA).forEach(b=>{charts[b].data.datasets=datasets(b);charts[b].options=opts();charts[b].update();});
+}
+build();
+</script>
+</body>
+</html>
